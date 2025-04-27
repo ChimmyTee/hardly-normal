@@ -5,4 +5,7 @@ import { defineConfig } from 'astro/config';
 export default defineConfig({
     site: 'https://chimmytee.github.io',
     base: 'hardly-normal',
+    vite: {
+        assetsInclude: ['**/*.xlsx'],
+    },
 });

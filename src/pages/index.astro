@@ -1,4 +1,22 @@
 ---
+import ExcelJS from "exceljs";
+import path from 'path';
+
+const excelFiles = import.meta.glob('/public/M1Database/index/Index_*.xlsx', { eager: true });
+
+const workbooks = [];
+
+for (const filePath in excelFiles) {
+  try {
+    const absoluteFilePath = path.resolve(process.cwd(), filePath.slice(1)); // Remove the leading '/'
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(absoluteFilePath);
+    workbooks.push({ name: filePath, workbook: workbook });
+    console.log(`Successfully read: ${filePath}`);
+  } catch (error) {
+    console.error(`Error reading ${filePath}:`, error);
+  }
+}
 
 ---
 
@@ -14,9 +32,13 @@
     <h1>Astro</h1>
     <h1>Logo here</h1>
     <form action="/search" method="get">
-      <input type="text" id="allSearch" name="allSearch" placeholder="anything" />
+      <input
+        type="text"
+        id="allSearch"
+        name="allSearch"
+        placeholder="anything"
+      />
       <button type="submit">Search</button>
     </form>
   </body>
 </html>
-
