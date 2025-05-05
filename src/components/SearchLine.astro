@@ -60,7 +60,7 @@
     // }
 
     try {
-      const response = await fetch(filteredIndexFiles[0].replace("/public", "");
+      const response = await fetch(filteredIndexFiles[0].replace("/public", ""));
       if (!response.ok) {
         throw new Error(`Failed to fetch file: ${response.statusText}`);
       }
