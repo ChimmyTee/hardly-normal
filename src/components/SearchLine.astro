@@ -60,7 +60,8 @@
     // }
 
     try {
-      const response = await fetch(filteredIndexFiles[0].replace("/public", ""));
+      //const response = await fetch(filteredIndexFiles[0]);
+      const response = await fetch("https://chimmytee.github.io/hardly-normal/M1Database/index/Index_A.xlsx")
       if (!response.ok) {
         throw new Error(`Failed to fetch file: ${response.statusText}`);
       }
