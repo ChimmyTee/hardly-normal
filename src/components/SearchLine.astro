@@ -1,0 +1,97 @@
+---
+
+---
+
+<div>
+  <h1>Search by Last Name</h1>
+  <input id="lastName" type="text" placeholder="Enter last name" />
+  <button id="lastNameBtn">Search</button>
+</div>
+
+<div>
+  <h1>Search Result:</h1>
+  <div id="lastNameResult"></div>
+</div>
+
+<div>
+  <h1>Search Display:</h1>
+  <div id="lastNameDisplay"></div>
+</div>
+
+<script>
+  import ExcelJS from "exceljs";
+
+  const lastNameInput = document.querySelector("#lastName") as HTMLInputElement;
+  const lastNameResult = document.querySelector(
+    "#lastNameResult"
+  ) as HTMLElement;
+  const lastNameDisplay = document.querySelector(
+    "#lastNameDisplay"
+  ) as HTMLElement;
+  const files = import.meta.glob("/public/M1Database/index/*.xlsx");
+  const filteredFiles = Object.keys(files).filter((file) =>
+    file.match(/\/I.*\.xlsx$/)
+  );
+
+  console.log(files); // Logs all files
+
+  console.log(filteredFiles[0]); // Logs only files starting with "I"
+
+  document.querySelector("#lastNameBtn").addEventListener("click", async () => {
+    const lastName = lastNameInput.value;
+    lastNameResult.innerText = `${lastName}\n${filteredFiles.join("\n")}`;
+
+    const firstLetter = lastName.charAt(0).toUpperCase();
+    const firstLetterRegex = new RegExp(`Index_${firstLetter}.xlsx`);
+    const filteredIndexFiles = Object.keys(files).filter((file) =>
+      file.match(firstLetterRegex)
+    );
+    lastNameDisplay.innerText = `${firstLetter}\n${filteredIndexFiles.join("\n")}`;
+
+    // try {
+
+    //   const workbook1 = new ExcelJS.Workbook();
+    //   await workbook1.xlsx.readFile("/M1Database/index/Index_A.xlsx");
+
+    //   // const workbook = new ExcelJS.Workbook();
+    //   // await workbook.xlsx.readFile("/M1Database/index/Index_A.xlsx");
+    // } catch (error) {
+    //   console.error(error.path);
+    // }
+
+    try {
+      const response = await fetch(filteredIndexFiles[0]);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch file: ${response.statusText}`);
+      }
+      const arrayBuffer = await response.arrayBuffer();
+      const workbook1 = new ExcelJS.Workbook();
+      await workbook1.xlsx.load(arrayBuffer);
+
+      console.log("Workbook loaded successfully");
+
+      const worksheet = workbook1.getWorksheet(1);
+      const jsonData = [];
+
+      worksheet.eachRow(function (row, rowNumber) {
+        if (rowNumber === 1) return; // Skip header row
+        const rowData = {
+          lastName: row.getCell(1).value,
+          firstName: row.getCell(2).value,
+        };
+        jsonData.push(rowData);
+
+      });
+
+      console.log(jsonData);
+    } catch (error) {
+      console.error(`Error loading file: ${error.message}`, error);
+    }
+
+    //   const workbook = new ExcelJS.Workbook();
+    //   await workbook.xlsx.readFile("/public/M1Database/index/Index_A.xlsx");
+    // } catch (error) {
+    //   console.error(`Error loading file: ${filteredIndexFiles[0]}`, error);
+    // }
+  });
+</script>

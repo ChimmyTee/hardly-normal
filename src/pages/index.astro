@@ -1,23 +1,45 @@
 ---
-import ExcelJS from "exceljs";
-import path from 'path';
+import "../styles/global.css";
+import SearchComponent from '../components/SearchComponent.astro';
+import SearchLine from "../components/SearchLine.astro";
 
-const excelFiles = import.meta.glob('/public/M1Database/index/Index_*.xlsx', { eager: true });
 
-const workbooks = [];
 
-for (const filePath in excelFiles) {
-  try {
-    const absoluteFilePath = path.resolve(process.cwd(), filePath.slice(1)); // Remove the leading '/'
-    const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.readFile(absoluteFilePath);
-    workbooks.push({ name: filePath, workbook: workbook });
-    console.log(`Successfully read: ${filePath}`);
-  } catch (error) {
-    console.error(`Error reading ${filePath}:`, error);
-  }
-}
+// const files = import.meta.glob('/public/M1Database/index/*.xlsx'); // Fetch all .xlsx files
+// const filteredFiles = Object.keys(files).filter(file => file.match(/\/S.*\.xlsx$/));
+// console.log(filteredFiles); // Logs only files starting with "T"
 
+
+
+// const excelFiles = import.meta.glob("/public/M1Database/index/Index_*.xlsx", {
+//   eager: true,
+// });
+
+// const workbooks = [];
+// const allRowsData: any = [];
+
+// for (const filePath in excelFiles) {
+//   try {
+//     const absoluteFilePath = path.resolve(process.cwd(), filePath.slice(1)); // Remove the leading '/'
+//     const workbook = new ExcelJS.Workbook();
+//     await workbook.xlsx.readFile(absoluteFilePath);
+//     workbooks.push({ name: filePath, workbook: workbook });
+//     console.log(`Successfully read: ${filePath}`);
+
+//     workbook.worksheets[0].eachRow(function (row, rowNumber) {
+//       //   allRowsData.push(JSON.stringify(row.values));
+//       //   console.log("Row " + rowNumber + " = " + JSON.stringify(row.values));
+//       const lastName = row.getCell(1).value;
+//       const firstName = row.getCell(2).value;
+//       allRowsData.push({ lastName, firstName });
+//       //   console.log("Row " + rowNumber + " = " + JSON.stringify(row.getCell(1).value));
+//     });
+//   } catch (error) {
+//     console.error(`Error reading ${filePath}:`, error);
+//   }
+// }
+
+// console.log(allRowsData);
 ---
 
 <html lang="en">
@@ -29,16 +51,10 @@ for (const filePath in excelFiles) {
     <title>Astro</title>
   </head>
   <body>
-    <h1>Astro</h1>
+    <h1 class="p-12">Astro</h1>
     <h1>Logo here</h1>
-    <form action="/search" method="get">
-      <input
-        type="text"
-        id="allSearch"
-        name="allSearch"
-        placeholder="anything"
-      />
-      <button type="submit">Search</button>
-    </form>
+    <SearchComponent message="Glad you made!" />
+    <br></br>
+    <SearchLine></SearchLine>
   </body>
 </html>
