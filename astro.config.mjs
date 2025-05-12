@@ -10,4 +10,8 @@ export default defineConfig({
         assetsInclude: ['**/*.xlsx'],
         plugins: [tailwindcss()],
     },
+    server: {
+        host: true,
+        port: 3000,
+    },
 });
