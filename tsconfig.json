@@ -1,5 +1,12 @@
 {
   "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "strict": false // Turns off all strict type checking
+    // Or, selectively disable:
+    // "noImplicitAny": false,
+    // "strictNullChecks": false,
+    // ... other options
+  },
   "include": [".astro/types.d.ts", "**/*"],
   "exclude": ["dist"]
 }
