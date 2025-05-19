@@ -1,0 +1,216 @@
+---
+
+---
+
+<div>
+  <h1>Search Engine - Last Name is Important</h1>
+  <input
+    id="lastName"
+    type="text"
+    placeholder="Enter last name"
+    class="border border-gray-300 p-2"
+    required
+  />
+  <input
+    id="firstName"
+    type="text"
+    placeholder="Enter first name"
+    class="border border-gray-300 p-2"
+  />
+  <input
+    id="emailAddress"
+    type="text"
+    placeholder="email address"
+    class="border border-gray-300 p-2"
+  />
+  <button
+    id="searchBtn"
+    class="border rounded-md border-gray-300 p-2 hover:bg-gray-100 round"
+    >Search</button
+  >
+</div>
+
+<div>
+  <h1>Display results:</h1>
+  <div id="results"></div>
+</div>
+
+<script>
+  import ExcelJS from "exceljs";
+
+  const lastNameInput = document.querySelector("#lastName") as HTMLInputElement;
+  const firstNameInput = document.querySelector(
+    "#firstName"
+  ) as HTMLInputElement;
+  const emailAddressInput = document.querySelector(
+    "#emailAddress"
+  ) as HTMLInputElement;
+  const resultsContainer = document.querySelector("#results") as HTMLElement;
+
+  // All the action starts here
+  document.querySelector("#searchBtn").addEventListener("click", async () => {
+    const lastName = lastNameInput.value.trim();
+    const firstName = firstNameInput.value;
+    const emailAddress = emailAddressInput.value;
+    const searchResults = [];
+    if (!lastName) {
+      alert("Last name is required.");
+      lastNameInput.focus();
+      return;
+    }
+
+    resultsContainer.innerHTML = `
+    <table>
+        <thead>
+        <tr>
+            <th class="px-4 py-2">Last Name</th>
+            <th class="px-4 py-2">First Name</th>
+            <th class="px-4 py-2">OrderNo</th>
+            <th class="px-4 py-2">Email</th>
+            <th class="px-4 py-2">OrderDate</th>
+            <th class="px-4 py-2">Product</th>
+            <th class="px-4 py-2">Fulfilment Store</th>
+        </tr>
+        </thead>
+        <tbody id="results-tbody"></tbody>
+    </table>
+    `;
+    const resultsTbody = document.querySelector(
+      "#results-tbody"
+    ) as HTMLElement;
+
+    try {
+      const files = import.meta.glob("/public/M1Database/index/*.xlsx");
+
+      // Finding the index file based on the first letter of the last name
+      const firstLetter = lastName.charAt(0).toUpperCase();
+      const firstLetterRegex = new RegExp(`Index_${firstLetter}.xlsx`);
+      const filteredIndexFiles = Object.keys(files).filter((file) =>
+        file.match(firstLetterRegex)
+      );
+      //resultsContainer.inner += `Grabbed Index Files\nFirst Letter: ${firstLetter}\n${filteredIndexFiles.join("\n")}`;
+
+      const response = await fetch(filteredIndexFiles[0]);
+      if (!response.ok) {
+        alert("Index Files not found");
+        return; // do nothing
+      }
+
+      // Loading Index File
+      const arrayBuffer = await response.arrayBuffer();
+      const indexWorkbook = new ExcelJS.Workbook();
+      await indexWorkbook.xlsx.load(arrayBuffer);
+      const indexWorkSheet = indexWorkbook.getWorksheet(1);
+
+      // fetch the data from the indexWorkSheet, and find order numbers matching the row.
+      indexWorkSheet.eachRow(async function (row, rowNumber) {
+        if (rowNumber === 1) {
+          return; // Skip header row
+        }
+
+        // columns for each row
+        const lastNameCell = row.getCell(1).value;
+        const firstNameCell = row.getCell(2).value;
+        const orderNoCell = row.getCell(3).value;
+        let emailAddressCell = row.getCell(4).value;
+        const orderDateCell = row.getCell(5).value;
+        // emailAddressCell bug, where something it returns as an object in my files.
+        if (
+          typeof emailAddressCell === "object" &&
+          "text" in emailAddressCell
+        ) {
+          emailAddressCell = emailAddressCell.text;
+        }
+
+        if (
+          (emailAddress &&
+            emailAddressCell === emailAddress &&
+            lastName &&
+            lastNameCell === lastName &&
+            !firstName) ||
+          (firstName &&
+            firstNameCell === firstName &&
+            lastName &&
+            lastNameCell === lastName &&
+            !emailAddress) ||
+          (emailAddress &&
+            emailAddressCell === emailAddress &&
+            firstName &&
+            firstNameCell === firstName &&
+            lastName &&
+            lastNameCell === lastName) ||
+          (!firstName && !emailAddress && lastNameCell === lastName)
+        ) {
+          // Parse date to something we can read
+          const date = new Date(orderDateCell.toString());
+          const formattedDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+
+          // itemsInfoLookUP - search for the year.
+          let itemsInfoFilePath = `/public/M1Database/order_items_info/${date.getFullYear()}`;
+          if (date.getMonth() + 1 > 6) {
+            itemsInfoFilePath += `/itemsInfo_Jul-Dec.xlsx`;
+          } else {
+            itemsInfoFilePath += `/itemsInfo_Jan-Jun.xlsx`;
+          }
+
+          // itemsInfoLookUp - step 2, fetching the file.
+          const itemsInfoResponse = await fetch(itemsInfoFilePath);
+          if (!itemsInfoResponse.ok) {
+            return;
+          } else {
+            // itemsInfoLookUp - step 3, loading the file.
+            const itemsInfoWorkbook = new ExcelJS.Workbook();
+            const itemsInfoArrayBuffer = await itemsInfoResponse.arrayBuffer();
+            await itemsInfoWorkbook.xlsx.load(itemsInfoArrayBuffer);
+            const itemsInfoWorkSheet = itemsInfoWorkbook.getWorksheet(1);
+
+            let product = "";
+            let fulfilmentStore = "";
+
+            itemsInfoWorkSheet.eachRow(function (row, rowNumber) {
+              if (rowNumber === 1) {
+                return;
+              } else if (row.getCell(1).value == orderNoCell) {
+                product = row.getCell(2).value.toString();
+                fulfilmentStore = row.getCell(3).value.toString();
+
+                // final rowData after all the checks.
+                const rowData = {
+                  lastName: lastNameCell,
+                  firstName: firstNameCell,
+                  orderNo: orderNoCell,
+                  email: emailAddressCell,
+                  orderDate: formattedDate,
+                  product: product,
+                  fulfilmentStore: fulfilmentStore,
+                };
+
+                // Push the rowData to the searchResults array
+                //searchResults.push(rowData);
+
+                // Create a new row in the results table
+
+                // console.log("Row Data: ", rowData.product);
+                const rowHtml = `
+                <tr class="border">
+                    <td class="px-4 py-2">${rowData.lastName}</td>
+                    <td class="px-4 py-2">${rowData.firstName}</td>
+                    <td class="px-4 py-2">${rowData.orderNo}</td>
+                    <td class="px-4 py-2">${rowData.email}</td>
+                    <td class="px-4 py-2">${rowData.orderDate}</td>
+                    <td class="px-4 py-2">${rowData.product}</td>
+                    <td class="px-4 py-2">${rowData.fulfilmentStore}</td>
+                </tr>
+                `;
+                resultsTbody.insertAdjacentHTML("beforeend", rowHtml);
+              }
+            });
+          }
+        }
+      });
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  });
+  // End of the searchBtn click event.
+</script>
