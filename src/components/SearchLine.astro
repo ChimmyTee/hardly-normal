@@ -116,23 +116,25 @@
           }
 
           
-
+          
           // The gnarly work for finding the rest of the itemInfos.
           let itemsInfoFilePath = `/public/M1Database/order_items_info/${date.getFullYear()}`;
           if (date.getMonth() + 1 > 6) {
             itemsInfoFilePath += `/itemsInfo_Jul-Dec.xlsx`;
           }
           const itemsInfoResponse = await fetch(itemsInfoFilePath);
+          if (!itemsInfoResponse.ok) {
+            //throw new Error(`Failed to fetch file: ${response.statusText}`);
+            return;
+          }
+
           console.log("what was being fetched for Items Info" + itemsInfoResponse);
           const workbook2 = new ExcelJS.Workbook();
           const itemsInfoArrayBuffer = await itemsInfoResponse.arrayBuffer();
           await workbook2.xlsx.load(itemsInfoArrayBuffer);
           const worksheet2 = workbook2.getWorksheet(1);
 
-          if (!itemsInfoResponse.ok) {
-            throw new Error(`Failed to fetch file: ${response.statusText}`);
-          }
-
+          
           let product = "";
           let fulfilmentStore = "";
 
